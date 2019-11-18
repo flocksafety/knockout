@@ -93,6 +93,23 @@ ko.bindingHandlers['options'] = {
             return [option];
         }
 
+        // Added by MRF to support opt groups
+        // https://github.com/knockout/knockout/pull/94#issuecomment-30991262
+        function optionGroupForArrayItem(arrayEntry) {
+            if (arrayEntry === captionPlaceholder)
+            return optionForArrayItem.apply(this, arguments);
+
+            var optgroup = document.createElement("optgroup");
+            var optGroupItems = applyToObject(arrayEntry, allBindings.get('optgroupChildren'), []);
+
+            ko.utils.setDomNodeChildrenFromArrayMapping(optgroup, optGroupItems, optionForArrayItem);
+            // Apply some text to the optgroup element
+            var optgroupText = applyToObject(arrayEntry, allBindings.get('optgroupText'), arrayEntry);
+            optgroup.setAttribute('label', optgroupText.toString());
+
+            return [optgroup];
+        }
+
         // By using a beforeRemove callback, we delay the removal until after new items are added. This fixes a selection
         // problem in IE<=8 and Firefox. See https://github.com/knockout/knockout/issues/1208
         arrayToDomNodeChildrenOptions['beforeRemove'] =
@@ -125,7 +142,9 @@ ko.bindingHandlers['options'] = {
             }
         }
 
-        ko.utils.setDomNodeChildrenFromArrayMapping(element, filteredArray, optionForArrayItem, arrayToDomNodeChildrenOptions, callback);
+        // Added by MRF to support opt groups
+        // https://github.com/knockout/knockout/pull/94#issuecomment-30991262
+        ko.utils.setDomNodeChildrenFromArrayMapping(element, filteredArray, allBindings.get('optgroupChildren') ? optionGroupForArrayItem : optionForArrayItem, null, callback);
 
         if (!valueAllowUnset) {
             // Determine if the selection has changed as a result of updating the options list
